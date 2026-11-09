@@ -1,8 +1,8 @@
 export const curriculum = [
   {
-    "title": "Introducción a OSINT: qué es y para qué sirve",
+    "title": "Introducción a la investigación digital: qué es y para qué sirve",
     "lessons": [
-      "¿Qué es OSINT?",
+      "¿Qué es la investigación digital?",
       "Ética y legalidad",
       "Mentalidad y metodología",
       "Tipos de fuentes",
@@ -48,7 +48,7 @@ export const curriculum = [
       "Clasificación profesional I: la web opaca y la web privada",
       "Clasificación profesional II: redes superpuestas",
       "Desmitificación: realidad frente a ficción sensacionalista",
-      "Aplicaciones en OSINT y seguridad del investigador"
+      "Aplicaciones en la investigación digital y seguridad del investigador"
     ]
   },
   {
@@ -66,8 +66,8 @@ export const curriculum = [
     "title": "Cómo hacer un informe forense",
     "lessons": [
       "Generación de informes: fase de difusión",
-      "Estructura básica de un informe OSINT",
-      "Evidencias y datos OSINT: recogida y conservación de la información",
+      "Estructura básica de un informe de investigación",
+      "Evidencias y datos de investigación: recogida y conservación de la información",
       "Redacción y presentación de resultados",
       "Recursos y modelos de referencia"
     ]

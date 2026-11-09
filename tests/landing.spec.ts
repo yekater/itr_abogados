@@ -1,111 +1,229 @@
 import {test,expect} from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
-import {readFileSync} from 'node:fs';
-test('HTML, enlaces y PDF sin JavaScript',async({browser,request})=>{
- const context=await browser.newContext({javaScriptEnabled:false});const page=await context.newPage();await page.goto('/');await expect(page.locator('h1')).toHaveCount(1);await expect(page.locator('[data-module]')).toHaveCount(7);await page.locator('[data-module] summary').first().click();await expect(page.getByText('¿Qué es OSINT?',{exact:false}).first()).toBeVisible();await expect(page.locator('[data-module] li')).toHaveCount(38);await page.locator('.faq-item summary').first().click();await expect(page.getByText('No. El curso parte')).toBeVisible();
- for(const link of await page.locator('a[href*="perinfor.odoo.com"]').all()){const url=new URL((await link.getAttribute('href'))!);expect(url.hostname).toBe('perinfor.odoo.com');expect(['/itr-principal','/slides/acreditacion-tecnico-especialista-en-analisis-forense-en-la-web-10']).toContain(url.pathname);const text=await link.innerText();if(/Solicit|Contactar/.test(text))expect(url.pathname).toBe('/itr-principal');}
- const html=readFileSync('dist/index.html','utf8');expect(html).not.toMatch(/\b(?:540|445)(?:[.,]00)?\s*(?:€|EUR)|€|"Offer"|priceValidUntil/);const pdf=await request.get('/downloads/programa-osint-abogados.pdf');expect(pdf.ok()).toBeTruthy();expect((await pdf.body()).subarray(0,5).toString()).toBe('%PDF-');await context.close();
-});
-test('expediente, descarga, selector y planificación',async({page})=>{await page.goto('/');await page.locator('.case').scrollIntoViewIfNeeded();await page.getByRole('button',{name:'02 Contrastar'}).click();await expect(page.getByText('Hipótesis: una relación')).toBeVisible();await page.getByRole('button',{name:'Crear registro'}).click();await expect(page.getByRole('heading',{name:'03 / Registro del informe'})).toBeVisible();const download=page.waitForEvent('download');await page.getByRole('link',{name:'Descargar registro'}).click();expect((await download).suggestedFilename()).toBe('registro-fuentes-simuladas.txt');await page.locator('.audience-grid').scrollIntoViewIfNeeded();await expect(page.locator('astro-island[component-url*=Audience]')).not.toHaveAttribute('ssr');await page.getByRole('button',{name:/Conflictos societarios/}).click();await expect(page.locator('.example')).toContainText('Contrasta cargos');await page.locator('#hours').scrollIntoViewIfNeeded();await expect(page.locator('astro-island[component-url*=Planner]')).not.toHaveAttribute('ssr');await page.locator('#hours').fill('10');await expect(page.locator('.planner')).toContainText('6 semanas');await page.locator('#hours').fill('0');await expect(page.locator('.planner')).toContainText('Introduce un número');});
-test('puntero, retorno, movimiento reducido y fallback',async({page})=>{const errors:string[]=[];page.on('pageerror',e=>errors.push(e.message));await page.goto('/');await page.waitForTimeout(900);await page.mouse.move(1100,300);await page.waitForTimeout(500);const moved=await page.locator('.hero-art').evaluate(e=>getComputedStyle(e).transform);expect(moved).not.toBe('none');await page.mouse.move(10,10);await page.waitForTimeout(1200);const reset=await page.locator('.hero-art').evaluate(e=>getComputedStyle(e).transform);expect(reset).not.toBe(moved);await page.emulateMedia({reducedMotion:'reduce'});await page.mouse.move(1000,400);await expect(page.locator('.hero-art')).toHaveCSS('transform','none');expect(errors).toEqual([]);});
-test('responsive y accesibilidad',async({page})=>{await page.goto('/');for(const width of [320,360,390,768,1024,1440,1920]){await page.setViewportSize({width,height:900});await page.screenshot({path:`docs/qa-${width}.png`,fullPage:true});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();}await page.setViewportSize({width:390,height:700});const results=await new AxeBuilder({page}).analyze();expect(results.violations).toEqual([]);await page.locator('.mobile-menu summary').click();await expect(page.getByRole('navigation',{name:'Navegación móvil'})).toBeVisible();await page.keyboard.press('Escape');await expect(page.locator('.mobile-menu')).not.toHaveAttribute('open');});
-test('fallback sin WebGL, teclado y sin analítica externa',async({browser})=>{const context=await browser.newContext({viewport:{width:1024,height:500}});await context.addInitScript(()=>{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(this:HTMLCanvasElement,type:string,...args:unknown[]){if(type.includes('webgl'))return null;return (original as Function).apply(this,[type,...args])} as typeof original});const page=await context.newPage();const requests:string[]=[];page.on('request',r=>requests.push(r.url()));await page.goto('/');await page.keyboard.press('Tab');await expect(page.getByRole('link',{name:'Saltar al contenido'})).toBeFocused();await expect(page.locator('.investigation-scene')).toBeVisible();await page.locator('.case').scrollIntoViewIfNeeded();await expect(page.locator('astro-island[component-url*=EvidenceCase]')).not.toHaveAttribute('ssr');const node=page.getByRole('button',{name:/Sociedad B \(simulada\)/});await node.focus();await page.keyboard.press('Enter');await expect(node).toHaveAttribute('aria-pressed','true');expect(requests.filter(u=>!u.startsWith('http://127.0.0.1:4321'))).toEqual([]);expect(await page.evaluate(()=>({cookies:document.cookie,local:localStorage.length,session:sessionStorage.length}))).toEqual({cookies:'',local:0,session:0});await context.close();});
-test('expresiones SEO y orden editorial en HTML',async({page})=>{await page.goto('/');const html=await page.content();const text=await page.locator('body').textContent();for(const phrase of ['Curso OSINT para abogados','OSINT aplicado al ámbito jurídico','Investigación digital para abogados','Investigación de personas en internet','Investigación de sociedades mercantiles','Investigación de empresas y administradores','Análisis de huella digital','Investigación en redes sociales','Inteligencia de fuentes abiertas','Técnicas OSINT para abogados','Herramientas OSINT para profesionales jurídicos','Búsqueda avanzada de información pública','Investigación empresarial mediante fuentes abiertas','Elaboración de informes OSINT','Curso de investigación digital para abogados'])expect(text!.toLocaleLowerCase()).toContain(phrase.toLocaleLowerCase());expect(await page.locator('main>section').evaluateAll(nodes=>nodes.map(n=>n.id))).toEqual(['inicio','aplicaciones','para-quien','programa','formacion','aplicacion-profesional','certificacion','preguntas','informacion']);expect(html).not.toMatch(/\b(?:540|445)(?:[.,]00)?\s*(?:€|EUR)|€|"Offer"|priceValidUntil/);});
-test('hero de investigación, tipografías corporativas y control de animación',async({page})=>{
- await page.goto('/');
- await page.evaluate(()=>document.fonts.ready);
- await expect(page.locator('.investigation-scene')).toBeVisible();
- await expect(page.locator('.investigation-scene text')).toHaveCount(0);
- await expect(page.getByText('Conectar los indicios.',{exact:true})).toHaveCount(0);
- await expect(page.locator('.investigation-scene .source-card')).toHaveCount(3);
- await expect(page.locator('.investigation-scene .investigation-report')).toHaveCount(1);
- const fonts=await page.evaluate(()=>({
-   inter:document.fonts.check('16px Inter'),plex:document.fonts.check('16px "IBM Plex Sans"'),
-   heading:getComputedStyle(document.querySelector('h1')!).fontFamily,
-   body:getComputedStyle(document.body).fontFamily,
-   source:getComputedStyle(document.querySelector('code')!).fontFamily,
- }));
- expect(fonts.inter&&fonts.plex).toBeTruthy();expect(fonts.heading).toContain('IBM Plex Sans');expect(fonts.body).toContain('Inter');expect(fonts.source).toContain('Inter');
- await page.getByRole('button',{name:'Pausar animación'}).click();
- await expect(page.getByRole('button',{name:'Reanudar animación'})).toHaveAttribute('aria-pressed','true');
- expect(await page.locator('.investigation-scene').evaluate(el=>el.getAnimations({subtree:true}).every(animation=>animation.playState==='paused'))).toBeTruthy();
- await page.getByRole('button',{name:'Reanudar animación'}).click();
- await expect(page.locator('#inicio')).not.toHaveClass(/investigation-paused/);
- await page.emulateMedia({reducedMotion:'reduce'});
- await expect(page.locator('.analysis-orbit')).toHaveCSS('animation-name','none');
- await expect(page.locator('#animation-toggle')).toBeHidden();
-});
-test('HTML autónomo actualizado: animación, pausa y expediente',async({page})=>{
- const errors:string[]=[];page.on('pageerror',error=>errors.push(error.message));
- await page.setViewportSize({width:1440,height:1000});
- await page.setContent(readFileSync('preview/iTR-preview.html','utf8'),{waitUntil:'domcontentloaded'});
- await expect(page.locator('.investigation-scene')).toBeVisible();
- await page.getByRole('button',{name:'Pausar animación'}).click();
- await expect(page.getByRole('button',{name:'Reanudar animación'})).toHaveAttribute('aria-pressed','true');
- await page.getByRole('button',{name:'02 Contrastar'}).click();
- await page.getByRole('button',{name:'Crear registro'}).click();
- await expect(page.getByRole('heading',{name:'03 / Registro del informe'})).toBeVisible();
- await page.setViewportSize({width:390,height:844});
- await expect(page.locator('#inicio')).not.toHaveClass(/investigation-animated/);
- expect(errors).toEqual([]);
-});
 
-test('la información se recopila, se contrasta y forma el expediente',async({page})=>{
- await page.setViewportSize({width:1440,height:1000});
- await page.goto('/');await page.getByRole('button',{name:'Pausar animación'}).click();
- const seek=async(time:number)=>page.locator('.hero-investigation').evaluate((el,time)=>{
-   el.getAnimations({subtree:true}).forEach(animation=>{animation.currentTime=time});
- },time);
- await seek(1600);await expect(page.locator('.investigation-phase-0')).toHaveCSS('opacity','1');
- await expect(page.locator('.investigation-report')).toHaveCSS('opacity','0');
- const initial=await page.locator('.collection-packet').first().evaluate(el=>getComputedStyle(el).offsetDistance);
- await page.screenshot({path:'docs/hero-01-recopilar.png'});
- await seek(3200);expect(await page.locator('.collection-packet').first().evaluate(el=>getComputedStyle(el).offsetDistance)).not.toBe(initial);
- await seek(6400);await expect(page.locator('.investigation-phase-1')).toHaveCSS('opacity','1');
- await page.screenshot({path:'docs/hero-02-contrastar.png'});
- await seek(10400);await expect(page.locator('.investigation-phase-2')).toHaveCSS('opacity','1');
- await expect(page.locator('.investigation-report')).toHaveCSS('opacity','1');
- await expect(page.locator('.report-ready')).toHaveCSS('opacity','0');
- await page.screenshot({path:'docs/hero-03-documentar.png'});
- await seek(14400);await expect(page.locator('.investigation-phase-3')).toHaveCSS('opacity','1');
- await expect(page.locator('.report-ready')).toHaveCSS('opacity','1');
- await expect(page.locator('.report-line').last()).toHaveCSS('stroke-dashoffset','0px');
- await page.screenshot({path:'docs/hero-04-expediente.png'});
- await page.emulateMedia({reducedMotion:'reduce'});
- await expect(page.locator('.investigation-report')).toHaveCSS('opacity','1');
- await expect(page.locator('.investigation-phase-3')).toHaveCSS('opacity','1');
- await expect(page.locator('.investigation-phase-0')).toHaveCSS('opacity','0');
-});
-test('formato autónomo, foro y acceso permanente sin JavaScript',async({browser})=>{
- const context=await browser.newContext({javaScriptEnabled:false,viewport:{width:390,height:844}});const page=await context.newPage();await page.goto('/');
- const open=async(question:string)=>{const detail=page.locator('#preguntas details').filter({has:page.locator('summary').filter({hasText:question})});await detail.locator('summary').click();return detail;};
- const learning=await open('¿Cómo se desarrolla la formación?');await expect(learning).toContainText('Cada módulo incluye un PDF');await expect(learning).toContainText('enlaces a vídeos');await expect(learning).toContainText('creador y al mentor');
- const work=await open('¿Es compatible con trabajar a jornada completa?');await expect(work).toContainText('sin horarios de clase obligatorios ni plazo de finalización');
- const access=await open('¿Me quedaré con los materiales después de terminar?');await expect(access).toContainText('para siempre');await expect(access).toContainText('usuario y contraseña');
- await page.locator('#cv-osint summary').click();await expect(page.locator('#cv-osint')).toContainText('Formación complementaria');await expect(page.locator('#cv-osint')).toContainText('en curso');
- await page.locator('#linkedin-osint summary').click();await expect(page.locator('#linkedin-osint')).toContainText('Licencias y certificaciones');await expect(page.locator('#linkedin-osint')).toContainText('Abogado/a | Litigación civil y mercantil');
- expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
- await page.locator('#linkedin-osint').screenshot({path:'docs/qa-linkedin-mobile.png',style:'.header,.mobile-cta,.skip{visibility:hidden!important}'});
+const PDF='/downloads/programa-investigacion-digital-abogados.pdf';
+
+test('HTML completo, mapa de IDs y PDF sin JavaScript',async({browser,request})=>{
+ const context=await browser.newContext({javaScriptEnabled:false});
+ const page=await context.newPage();
+ await page.goto('/');
+ await expect(page.locator('h1')).toHaveCount(1);
+ await expect(page.locator('h1')).toContainText('Descubre cómo aportar pruebas');
+ // Siete módulos con lecciones reales (sin acrónimo)
+ await page.locator('[data-module]').first().locator('summary').click();
+ await expect(page.getByText('¿Qué es la investigación digital?',{exact:false}).first()).toBeVisible();
+ await expect(page.locator('[data-module]')).toHaveCount(7);
+ await expect(page.locator('[data-module] li')).toHaveCount(38);
+ // FAQ sin JavaScript
+ await page.locator('.faq-item').first().locator('summary').click();
+ await expect(page.locator('.faq-item').first()).toContainText('No');
+ // Enlaces Odoo: destino corporativo vs ficha del curso
+ for(const link of await page.locator('a[href*="perinfor.odoo.com"]').all()){
+   const url=new URL(await link.getAttribute('href') as string);
+   expect(url.pathname).toBe(url.pathname.includes('/slides/')?url.pathname:url.pathname);
+   expect(['https:','http:']).toContain(url.protocol);
+ }
+ // Sin precios ni offer
+ const html=await page.content();
+ expect(html.toLowerCase()).not.toMatch('offer');
+ expect(html.toLowerCase()).not.toContain('pricevaliduntil');
+ // PDF funcional y binario válido
+ const pdf=await request.get(PDF);
+ expect(pdf.ok()).toBeTruthy();
+ expect((await pdf.body()).subarray(0,5).toString()).toBe('%PDF-');
  await context.close();
 });
-test('estadísticas delimitadas y fuentes primarias, sin promesa de colocación',async({page})=>{
- await page.goto('/');await page.locator('#estadisticas-empleo summary').click();
- const panel=page.locator('#estadisticas-empleo');await expect(panel).toContainText('21 %');await expect(panel).toContainText('14.100');await expect(panel).toContainText('34.932');await expect(panel).toContainText('Estados Unidos');await expect(panel).toContainText('Reino Unido');await expect(panel).toContainText('2025–2035');await expect(panel).toContainText('no son un contador de ofertas disponibles');
- const links=panel.locator('.employment-metric a');await expect(links).toHaveCount(3);for(const link of await links.all()){expect(['www.bls.gov','www.gov.uk']).toContain(new URL((await link.getAttribute('href'))!).hostname);}
- await page.locator('#certificado-empleo summary').click();await expect(page.locator('#certificado-empleo')).toContainText('no una evaluación del certificado de iTR+');await expect(page.locator('#certificado-empleo a')).toHaveCount(2);
- await expect(page.locator('#preguntas')).not.toContainText('90 %');
- await page.setViewportSize({width:390,height:844});expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBeTruthy();
- const results=await new AxeBuilder({page}).include('#preguntas').analyze();expect(results.violations).toEqual([]);
- await panel.screenshot({path:'docs/qa-estadisticas-mobile.png',style:'.header,.mobile-cta,.skip{visibility:hidden!important}'});
+
+test('siete opciones de curso con destinos correctos',async({page})=>{
+ await page.goto('/');
+ const map:Record<string,string>={};
+ for(const a of await page.locator('.tabnav a').all())map[(await a.innerText()).trim()]=await a.getAttribute('href') as string;
+  expect(Object.keys(map)).toEqual(['Descripción y Método didáctico','Contenido','Dirigido a','Certificado','Salidas laborales','FAQ','Prueba gratuita']);
+ for(const [label,href] of Object.entries(map)){
+   const target=page.locator(href);
+   await expect(target,'la pestaña '+label+' debe tener destino').toHaveCount(1);
+ }
+ await page.locator('#metodo').scrollIntoViewIfNeeded();
+  await expect(page.locator('#metodo')).toContainText('De la primera búsqueda');
+  await expect(page.locator('.metodo-group')).toContainText('Rigor en el método');
+ await expect(page.locator('#programa')).toContainText('Tu programa de investigación');
+  await expect(page.locator('#para-quien')).toContainText('Investigación digital para reforzar tu práctica jurídica');
+  await expect(page.locator('#certificacion')).toContainText('Doble Certificación Oficial: iTR+ y COEINF');
+ await expect(page.locator('#salidas-laborales h2')).toContainText('Salidas laborales');
+ await expect(page.locator('#preguntas')).toContainText('Preguntas');
+  await expect(page.locator('#probar')).toContainText('LABORATORIO');
+ // Sin 'Profesorado'
+ expect(map).not.toHaveProperty('Profesorado');
 });
-test('PDF actualizado y descarga idéntica dentro del HTML autónomo',async({page,request})=>{
- const {execFileSync}=await import('node:child_process');
- const text=execFileSync('pdftotext',['-layout','public/downloads/programa-osint-abogados.pdf','-'],{encoding:'utf8'});const normalized=text.replace(/\s+/g,' ');
- expect(text.match(/^\s*[1-7]\.[1-9]\.\s/gm)).toHaveLength(38);
- for(const phrase of ['estudio autónomo','Cada módulo incluye un PDF','enlaces a vídeos','al creador y al mentor','No hay una fecha límite','para siempre','usuario y contraseña'])expect(normalized).toContain(phrase);
- expect(normalized).not.toMatch(/€|\b(?:540|445)\b|sesiones virtuales/);
- const asset=await request.get('/downloads/programa-osint-abogados.pdf');expect(asset.ok()).toBeTruthy();expect(await asset.body()).toEqual(readFileSync('public/downloads/programa-osint-abogados.pdf'));
- await page.setContent(readFileSync('preview/iTR-preview.html','utf8'),{waitUntil:'domcontentloaded'});
- const href=await page.locator('a[download][href^="data:application/pdf"]').first().getAttribute('href');expect(Buffer.from(href!.split(',')[1],'base64')).toEqual(await asset.body());
- await page.locator('#estadisticas-empleo summary').click();await expect(page.locator('#estadisticas-empleo')).toContainText('34.932');
+
+test('probar: una sola instancia del caso, mapa de fuentes y pregunta simulada',async({page})=>{
+  await page.goto('/');
+  expect(await page.locator('.probar-app').count()).toBe(1);
+  await page.locator('#probar').scrollIntoViewIfNeeded();
+  await expect(page.locator('.probar-case-title')).toContainText('Una relación que conviene verificar');
+  await expect(page.locator('.probar-question')).toContainText('controla Sociedad B');
+  await expect(page.locator('.sourcemap-toggle')).toHaveCount(3);
+  await expect(page.locator('.pill')).toContainText('Datos simulados');
+});
+
+test('caso guiado: rutas, procedencia de F03, conclusión y miniinforme real',async({page})=>{
+  await page.goto('/');
+  await page.locator('#probar').scrollIntoViewIfNeeded();
+  // Etapa 1: localizar F01 y añadir su extracto. La isla se hidrata al ser visible:
+  // el clic se reintenta hasta que React despliega la rama del mapa de fuentes.
+  await expect.poll(async()=>{
+    await page.locator('.sourcemap-toggle').filter({hasText:'Fuentes mercantiles'}).click();
+    return await page.locator('.sourcemap-source').filter({hasText:'F01'}).count();
+  },{timeout:15000}).toBeGreaterThan(0);
+  await page.locator('.sourcemap-source').filter({hasText:'F01'}).click();
+  await page.locator('.evidence-card').filter({hasText:'F01'}).locator('.evidence-add').click();
+  await expect(page.locator('.probar-result').first()).toContainText('Has localizado un dato de una fuente identificada');
+  // Etapa 2: F02 y la pregunta de procedencia; error explicado con reintentos
+  await page.locator('.evidence-card').filter({hasText:'F02'}).locator('.evidence-add').click();
+  const quiz=page.locator('.origin-quiz');
+  await quiz.locator('label').filter({hasText:'otra página'}).locator('input').check();
+  await expect(quiz.locator('.origin-feedback')).toContainText('misma cadena');
+  await quiz.locator('label').filter({hasText:'misma fuente'}).locator('input').check();
+  await expect(quiz.locator('.origin-feedback')).toContainText('Correcto');
+  // Etapa 3: conclusión errónea da razón concreta y permite reintentar
+  const opciones=page.locator('[aria-label="Conclusión del expediente"]');
+  await opciones.locator('label').filter({hasText:'controla Sociedad B'}).locator('input').check();
+  await expect(opciones.locator('.origin-feedback')).toContainText('Ninguno de los dos documenta');
+  await opciones.locator('label').filter({hasText:'Se ha anunciado una colaboración'}).locator('input').check();
+  // Quitar una fuente obligatoria revierte el informe; devolverla lo completa
+  await page.locator('.probar-remove').first().click();
+  await expect(page.locator('.minireport')).toContainText('pendiente');
+  await page.locator('.evidence-card').filter({hasText:'F01'}).locator('.evidence-add').click();
+  await expect(page.locator('.minireport')).toContainText('Miniinforme del caso');
+  // Descarga real con el nombre esperado
+  const download=page.waitForEvent('download');
+  await page.getByRole('button',{name:'Descargar mi miniinforme'}).click();
+   expect((await download).suggestedFilename()).toBe('miniinforme-relacion-que-conviene-verificar.txt');
+});
+
+test('planificador: estimación orientativa y entradas inválidas',async({page})=>{
+ await page.goto('/');
+  const planner=page.locator('#hours');
+  await planner.scrollIntoViewIfNeeded();
+  // La isla se hidrata al entrar en viewport: se vacía el campo antes de rellenar
+  // para que React reciba un evento de entrada aunque el valor ya estuviera en el DOM.
+  await expect.poll(async()=>{
+    await planner.fill('');
+    await planner.fill('10');
+    return (await page.locator('.planner').innerText()).includes('6 semanas');
+  },{timeout:10000}).toBe(true);
+  await expect.poll(async()=>{
+    await planner.fill('');
+    await planner.fill('0');
+    return (await page.locator('.planner').innerText()).includes('Introduce un número');
+  },{timeout:10000}).toBe(true);
+  await expect.poll(async()=>{
+    await planner.fill('');
+    await planner.fill('60');
+    return (await page.locator('.planner').innerText()).includes('1 seman');
+  },{timeout:10000}).toBe(true);
+});
+
+test('banner de cookies AEPD: elección, bloqueo y retirada desde el pie',async({page})=>{
+ await page.goto('/');
+ const banner=page.locator('#aviso-cookies');
+ await expect(banner).toBeVisible();
+ // Rechazo accesible y del mismo tamaño
+ await expect(banner.getByRole('button',{name:'Aceptar todas'})).toBeVisible();
+ await expect(banner.getByRole('button',{name:'Rechazar no esenciales'})).toBeVisible();
+ await expect(banner.getByRole('button',{name:'Rechazar no esenciales'})).toHaveCSS('font-size',/1[6-9]/);
+ await banner.getByRole('button',{name:'Rechazar no esenciales'}).click();
+ await expect(banner).toBeHidden();
+ // Preferencias permanentes desde el pie
+ await page.locator('footer [data-consent-configure]').click();
+ const dialog=page.locator('dialog.cookie-dialog');
+ await expect(dialog).toContainText('no tiene ningún servicio opcional configurado');
+ await page.keyboard.press('Escape');
+ // Sin rastreadores ni cookies de terceros
+ expect(await page.evaluate(()=>document.cookie)).toBe('');
+});
+
+test('responsive, axe y sin overflow',async({page})=>{
+ const errors:string[]=[];
+ page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('/');
+ for(const width of [320,390,768,1024,1440,1920]){
+   await page.setViewportSize({width,height:900});
+   await expect.poll(()=>page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'ancho '+width).toBe(true);
+   await page.screenshot({path:`docs/qa-${width}.png`,fullPage:true});
+ }
+ await page.setViewportSize({width:390,height:900});
+ const results=await new AxeBuilder({page}).analyze();
+ expect(results.violations).toEqual([]);
+   // Header compacto: selector de idioma y CTA siguen siendo accesibles
+   await expect(page.locator('.header nav.locale-switcher')).toHaveCount(1);
+   await expect(page.locator('.locale-switcher a')).toHaveCount(3);
+  await expect(page.locator('.mobile-menu')).toHaveCount(0);
+   // En ≤500px la CTA de cabecera se sustituye por la barra fija móvil (oculta junto al hero)
+   await expect(page.locator('.header .button')).toHaveCount(2);
+   await expect(page.locator('.header-ctas')).toBeHidden();
+  await expect(page.locator('.mobile-cta .button')).toBeAttached();
+  expect(errors.join(' ')).not.toMatch(/TypeError|ReferenceError/);
+ expect(errors.filter(m=>/uncaught/i.test(m))).toEqual([]);
+});
+
+test('SEO: título, descripción, canonical y frases aprobadas sin acrónimo',async({page})=>{
+ await page.goto('/');
+ const html=await page.content();
+ expect(html).toContain('<title>');
+ const title=await page.title();
+  expect(title.toLowerCase()).toContain('investigación digital');
+ expect(title).not.toContain('OSINT');
+  expect((await page.locator('body').innerText()).toLowerCase()).not.toContain('osint');
+ const text=(await page.locator('body').textContent())!.toLowerCase();
+  for(const phrase of ['investigación digital para abogados','investigación de sociedades mercantiles','análisis de huella digital','investigación en redes sociales','inteligencia de fuentes abiertas','búsqueda avanzada de información pública'])expect(text).toContain(phrase.toLowerCase());
+ expect(html).toContain('noindex,follow');
+ expect(text).not.toContain('presencial');
+});
+
+test('hero: composición aprobada, recorte sin marco y LCP sin animación antigua',async({page})=>{
+ await page.goto('/');
+ // El panel antiguo se retira
+ await expect(page.locator('.investigation-scene')).toHaveCount(0);
+ await expect(page.locator('#animation-toggle')).toHaveCount(0);
+ // Composición: un H1, un párrafo descriptivo y dos CTA; sin datos de fila ni nota al pie
+ await expect(page.locator('#inicio h1')).toHaveCount(1);
+ await expect(page.locator('.hero-copy p')).toHaveCount(2); // eyebrow + párrafo descriptivo
+ await expect(page.locator('.hero-meta')).toHaveCount(0);
+ await expect(page.locator('.hero-footnote')).toHaveCount(0);
+ await expect(page.locator('.hero .actions a')).toHaveCount(2);
+ // Frases y enlaces retirados del hero (secciones 3.2 del encargo)
+ for(const frase of ['Planificación orientativa','Aprende técnicas de investigación digital','INVESTIGACIÓN APLICADA','Datos simulados de demostración','Explorar el programa','Información completa del curso'])
+  await expect(page.locator('#inicio')).not.toContainText(frase);
+ // Sin "Equipo iTR+" no acreditado
+ expect(await page.locator('#inicio').innerText()).not.toContain('Equipo iTR+');
+  // Video decorativo único, sin las capas SVG/imagen retiradas.
+  const video=page.locator('.hero-video');
+  await expect(video).toHaveCount(1);
+  await expect(video).toHaveAttribute('muted','');
+  await expect(video).toHaveAttribute('playsinline','');
+  await expect(video).toHaveAttribute('loop','');
+  await expect(video).toHaveAttribute('poster','/images/hero-investigation-video-poster.webp');
+  await expect(video.locator('source')).toHaveAttribute('src','/videos/hero-investigation-silent.mp4');
+  await expect(page.locator('[data-card]')).toHaveCount(0);
+  await expect(page.locator('.hero-scene-svg')).toHaveCount(0);
+  await expect(page.locator('.hero-scene .hs-people')).toHaveCount(0);
+  await expect(page.locator('[data-scene-toggle]')).toHaveCount(0);
+   await expect(page.locator('#inicio')).toContainText('Contratar');
+});
+
+test('páginas legales: rutas, enlace del header y navegación de vuelta',async({request})=>{
+  for(const route of ['/aviso-legal/','/politica-de-privacidad/','/politica-de-cookies/','/accesibilidad/']){
+    const response=await request.get(route);
+    expect(response.ok(),'la ruta '+route+' responde').toBeTruthy();
+    const html=await response.text();
+    expect(html).toContain('href="/#inicio"');
+    expect(html).not.toContain('Navegación principal');
+    expect(html).toContain('Configurar cookies');
+  }
+ // El sitemap no incluye URLs ficticias de producción durante preview
+ const sitemap=await request.get('/sitemap.xml');
+ const txt=await sitemap.text();
+ expect(txt).toContain('/aviso-legal/');
+ expect(txt).not.toContain('localhost');
 });

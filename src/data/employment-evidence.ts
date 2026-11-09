@@ -1,32 +1,77 @@
-// Fuentes primarias leídas el 22/10/2026. Contexto internacional, no resultados de iTR+.
+// Registro centralizado de evidencia (contrato del encargo). Fuentes primarias verificadas
+// en su página original el 25/10/2026; actualizar `checkedAt` con cada revisión.
+export type EvidenceMetric = {
+  id: string;
+  displayValue: string;
+  claim: string;
+  geography: string;
+  period: string;
+  unit: string;
+  kind: 'observed' | 'projection' | 'survey';
+  sourceName: string;
+  sourceUrl: string;
+  publishedAt?: string;
+  checkedAt: string;
+  scopeNote: string;
+};
+
 export const employmentEvidence = {
-  checkedAt: '22 de octubre de 2026',
-  blsUrl: 'https://www.bls.gov/ooh/computer-and-information-technology/information-security-analysts.htm',
-  ukUrl: 'https://www.gov.uk/government/publications/cyber-security-skills-in-the-uk-labour-market-2026/cyber-security-skills-in-the-uk-labour-market-2026',
+  checkedAt: '25 de octubre de 2026',
   metrics: [
     {
-      figure: '21 %',
-      title: 'crecimiento del empleo proyectado',
-      scope: 'Estados Unidos · Analistas de seguridad de la información · 2025–2035',
-      explanation: 'Es una proyección de crecimiento de una ocupación técnica durante diez años, no una tasa de contratación de personas con un certificado OSINT.',
-      source: 'BLS · Occupational Outlook Handbook · Job Outlook',
-      url: 'https://www.bls.gov/ooh/computer-and-information-technology/information-security-analysts.htm',
+      id: 'incibe-2025',
+      displayValue: 'más de 122.000',
+      claim: 'ciberincidentes gestionados en España',
+      geography: 'España',
+      period: 'Año 2025',
+      unit: 'incidentes de ciberseguridad',
+      kind: 'observed',
+      sourceName: 'INCIBE — «INCIBE detectó más de 122.000 incidentes de ciberseguridad en 2025»',
+      sourceUrl: 'https://www.incibe.es/incibe/sala-de-prensa/incibe-detecto-mas-de-122000-incidentes-de-ciberseguridad-en-2025',
+      publishedAt: '2026',
+      checkedAt: '25 de octubre de 2026',
+      scopeNote: 'Contexto de riesgos digitales que atraviesan empresas e instituciones, también relevantes para tu futuro laboral.',
     },
     {
-      figure: '14.100',
-      title: 'aperturas de empleo al año, en promedio',
-      scope: 'Estados Unidos · Analistas de seguridad de la información · Proyección 2025–2035',
-      explanation: 'Incluye aperturas por sustitución de trabajadores. No es un recuento de vacantes abiertas hoy ni de puestos para abogados con OSINT.',
-      source: 'BLS · Occupational Outlook Handbook · Job Outlook',
-      url: 'https://www.bls.gov/ooh/computer-and-information-technology/information-security-analysts.htm',
+      id: 'wef-jobs-2025',
+      displayValue: '39 %',
+      claim: 'de habilidades actuales se transformará o quedará desactualizada entre 2025 y 2030',
+      geography: 'Mundo (55 economías)',
+      period: 'Perspectiva 2025-2030',
+      unit: 'porcentaje de habilidades',
+      kind: 'survey',
+      sourceName: 'World Economic Forum — The Future of Jobs Report 2025',
+      sourceUrl: 'https://www.weforum.org/publications/the-future-of-jobs-report-2025/',
+      publishedAt: '2025',
+      checkedAt: '25 de octubre de 2026',
+      scopeNote: 'Encuesta a más de mil empleadores: transforma el contexto de competencias profesionales.',
     },
     {
-      figure: '34.932',
-      title: 'anuncios de puestos centrados en ciberseguridad',
-      scope: 'Reino Unido · Enero–diciembre de 2025 · Informe publicado en 2026',
-      explanation: 'El informe analiza anuncios online de puestos cuya función principal es la ciberseguridad, con datos de Lightcast. Los anuncios no equivalen a contrataciones ni a oportunidades exclusivamente jurídicas u OSINT.',
-      source: 'Gobierno británico / DSIT · Informe 2026 · Apartado 4.1',
-      url: 'https://www.gov.uk/government/publications/cyber-security-skills-in-the-uk-labour-market-2026/cyber-security-skills-in-the-uk-labour-market-2026',
+      id: 'bls-isa',
+      displayValue: '+21 %',
+      claim: 'crecimiento de empleo en analistas de seguridad de la información',
+      geography: 'Estados Unidos',
+      period: 'Proyección 2025-2035',
+      unit: 'crecimiento de una ocupación técnica',
+      kind: 'projection',
+      sourceName: 'U.S. Bureau of Labor Statistics — Information Security Analysts, Occupational Outlook Handbook',
+      sourceUrl: 'https://www.bls.gov/ooh/computer-and-information-technology/information-security-analysts.htm',
+      checkedAt: '25 de octubre de 2026',
+      scopeNote: 'Proyección estadounidense para una ocupación técnica: no es una cifra mundial ni de abogados con esta formación.',
+    },
+    {
+      id: 'uk-dsit-2025',
+      displayValue: '34.932',
+      claim: 'anuncios de puestos cuya función principal es la ciberseguridad',
+      geography: 'Reino Unido',
+      period: 'Enero-diciembre de 2025 (informe publicado en 2026)',
+      unit: 'anuncios online analizados con datos de Lightcast',
+      kind: 'observed',
+      sourceName: 'Gobierno británico / DSIT — Cyber security skills in the UK labour market 2026',
+      sourceUrl: 'https://www.gov.uk/government/publications/cyber-security-skills-in-the-uk-labour-market-2026/cyber-security-skills-in-the-uk-labour-market-2026',
+      publishedAt: '2026',
+      checkedAt: '25 de octubre de 2026',
+      scopeNote: '',
     },
   ],
-} as const;
+} as const satisfies {checkedAt: string; metrics: EvidenceMetric[]};

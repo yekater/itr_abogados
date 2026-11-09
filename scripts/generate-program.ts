@@ -5,8 +5,8 @@ import {duration,durationNote,COURSE_URL} from '../src/data/site';
 import {courseFormat} from '../src/data/course-format';
 
 mkdirSync('public/downloads',{recursive:true});
-const doc=new PDFDocument({size:'A4',margin:48,bufferPages:true,info:{Title:'iTR+ · Programa OSINT para abogados',Author:'iTR+',Subject:'Programa, metodología de estudio autónomo y acceso permanente'}});
-const stream=createWriteStream('public/downloads/programa-osint-abogados.pdf');
+const doc=new PDFDocument({size:'A4',margin:48,bufferPages:true,info:{Title:'iTR+ · Programa de investigación digital para abogados',Author:'iTR+',Subject:'Programa, metodología de estudio autónomo y acceso permanente'}});
+const stream=createWriteStream('public/downloads/programa-investigacion-digital-abogados.pdf');
 doc.pipe(stream);
 doc.registerFont('Inter','node_modules/@fontsource/inter/files/inter-latin-400-normal.woff');
 doc.registerFont('IBM Plex Sans','node_modules/@fontsource/ibm-plex-sans/files/ibm-plex-sans-latin-500-normal.woff');
@@ -19,7 +19,7 @@ function page(kicker:string,heading:string){doc.addPage();label(kicker);title(he
 
 label('FORMACIÓN ESPECIALIZADA · INVESTIGACIÓN DIGITAL');
 doc.font('IBM Plex Sans').fontSize(40).fillColor('#0B1F3A').text('iTR+');doc.moveDown(.7);
-title('Curso OSINT para abogados');
+title('Curso iTR+ para abogados');
 body('Aprende a buscar, contrastar y documentar información pública con una metodología práctica y rigurosa.');
 doc.moveDown(.3);
 section('7 módulos · 38 lecciones · Evaluación final','Investigación en fuentes abiertas con enfoque jurídico, desde los fundamentos hasta la elaboración de informes.');
@@ -60,7 +60,7 @@ for(let i=range.start;i<range.start+range.count;i++){
   doc.switchToPage(i);
   const bottom=doc.page.margins.bottom;doc.page.margins.bottom=0;
   doc.moveTo(48,doc.page.height-48).lineTo(doc.page.width-48,doc.page.height-48).lineWidth(.5).strokeColor('#d8e1e9').stroke();
-  doc.font('Inter').fontSize(8).fillColor('#507DA8').text('iTR+ · Programa OSINT para abogados',48,doc.page.height-34,{width:width-70,lineBreak:false});
+  doc.font('Inter').fontSize(8).fillColor('#507DA8').text('iTR+ · Programa de investigación digital para abogados',48,doc.page.height-34,{width:width-70,lineBreak:false});
   doc.text(`${i+1} / ${range.count}`,doc.page.width-100,doc.page.height-34,{width:52,align:'right',lineBreak:false});
   doc.page.margins.bottom=bottom;
 }
