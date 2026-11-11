@@ -613,6 +613,8 @@ dialog.cookie-dialog .services-note { background: #f0f4f7; border-radius: 6px; p
   .itr-contexto-grid li:nth-child(2n) { border-right: 0; }
    .itr-contexto-grid li:nth-child(n+3) { border-top: 1px solid var(--context-grid-ink); }
 }
+
+html.sub-popup-open { overflow: hidden; }
 @media (max-width: 800px) {
   :root { --text-body: var(--text-body-mobile); }
   .header-inner { min-height: calc(77px - 1px); }
