@@ -1,7 +1,7 @@
 ---
 const odooBase = (import.meta.env.PUBLIC_ODOO_BASE_URL || 'https://perinfor.odoo.com').replace(/\/+$/, '');
 const mailingListId = import.meta.env.PUBLIC_ODOO_LIST_ID || '2';
-const subscribeUrl = `${odooBase}/website_mass_mailing/subscribe`;
+const subscribeUrl = `${odooBase}/website/form/mailing.contact`;
 type Locale = 'es' | 'ca' | 'en';
 const {locale = 'es'} = Astro.props as {locale?: Locale};
 const copy = {
@@ -17,7 +17,7 @@ const copy = {
     emailLabel: 'Correo electrónico',
     close: 'Cerrar',
     errorMsg: 'No hemos podido enviar tu email. Inténtalo de nuevo.',
-    okMsg: '¡Gracias! Te escribiremos muy pronto.',
+    okMsg: 'Hemos enviado tu solicitud. No podemos confirmar el registro en este momento.',
   },
   ca: {
     badge: 'FORMACIÓ EN INVESTIGACIÓ DIGITAL',
@@ -31,7 +31,7 @@ const copy = {
     emailLabel: 'Correu electrònic',
     close: 'Tancar',
     errorMsg: 'No hem pogut enviar el teu email. Torna-ho a provar.',
-    okMsg: 'Gràcies! T’escriurem molt aviat.',
+    okMsg: 'Hem enviat la teva sol·licitud. No podem confirmar el registre en aquest moment.',
   },
   en: {
     badge: 'TRAINING IN DIGITAL INVESTIGATION',
@@ -45,7 +45,7 @@ const copy = {
     emailLabel: 'Email address',
     close: 'Close',
     errorMsg: 'We couldn’t send your email. Please try again.',
-    okMsg: 'Thanks! We’ll be in touch very soon.',
+    okMsg: 'Your request has been sent. We cannot confirm your registration at this time.',
   },
 }[locale];
 ---
@@ -61,7 +61,7 @@ const copy = {
       <h2 id="sub-popup-title" class="sub-popup-title" set:html={copy.title}/>
       <p class="sub-popup-lead">{copy.strong}</p>
       <p class="sub-popup-text">{copy.line1}<br/><Fragment set:html={copy.line2}/></p>
-      <form class="sub-popup-form" novalidate data-sub-form data-ok-msg={copy.okMsg} data-error-msg={copy.errorMsg}>
+      <form class="sub-popup-form" novalidate data-sub-form data-odoo-url={subscribeUrl} data-list-id={mailingListId} data-ok-msg={copy.okMsg} data-error-msg={copy.errorMsg}>
         <label class="sub-popup-field">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3z"/><path d="m3 7 9 6 9-6"/></svg>
           <input type="email" name="email" required placeholder={copy.placeholder} autocomplete="email" aria-label={copy.emailLabel}/>
@@ -123,20 +123,21 @@ const copy = {
       btn&&(btn.disabled=true);
       const email=(input?.value||'').trim();
       try{
-        await fetch(subscribeUrl,{
+        const url=form.dataset.odooUrl;
+        const listId=form.dataset.listId;
+        if(!url||!listId)throw new Error('Missing Odoo configuration');
+        await fetch(url,{
           method:'POST',
           mode:'no-cors',
-          headers:{'Content-Type':'text/plain'},
-          body:JSON.stringify({jsonrpc:'2.0',method:'call',params:{value:email,subscription_type:'email',list_id:Number(mailingListId)}})
+          body:new URLSearchParams({name:email,email,list_ids:listId})
         });
         msg&&(msg.textContent=form.dataset.okMsg||'',msg.hidden=false);
-        track('subscribe_submit',{destination_type:'odoo_mailing_list',list_id:mailingListId});
-        localStorage.setItem(KEY,'1');
-        setTimeout(()=>close(true),2500);
+        track('subscribe_submit',{destination_type:'odoo_mailing_list',list_id:listId});
+        setTimeout(()=>close(),4000);
       }catch{
         msg&&(msg.textContent=form.dataset.errorMsg||'',msg.hidden=false);
         btn&&(btn.disabled=false);
-        track('subscribe_error',{destination_type:'odoo_mailing_list',list_id:mailingListId});
+        track('subscribe_error',{destination_type:'odoo_mailing_list',list_id:form.dataset.listId||''});
       }
     });
   }
