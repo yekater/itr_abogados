@@ -4,7 +4,7 @@ export const COURSE_URL = 'https://perinfor.odoo.com/slides/acreditacion-tecnico
 export const courseHours = 30;
 export const durationDetails = 'Este tiempo incluye ver los vídeos, hacer los ejercicios, trabajar de forma individual y completar la evaluación final.';
 export const duration = `${courseHours} horas de carga formativa estimada. ${durationDetails}`;
-export const durationNote = 'El tiempo para familiarizarse con los módulos configurado actualmente en la plataforma es de 15 h 10 min.';
+export const durationNote = 'El tiempo para familiarizarse con los módulos configurado actualmente en la plataforma es de 22 h 20 min.';
 export const certification = 'La formación contempla un certificado final. La referencia a COEINF, la entidad emisora, el visado y su denominación y alcance están pendientes de confirmación. No se presenta como una titulación oficial ni garantiza la admisión judicial de informes.';
 export const specialties = [
  ['Litigación civil y mercantil','Mejora la prueba documental y la diligencia investigadora en pleitos.','Localiza un documento público y registra su procedencia antes de incorporarlo al análisis.'],

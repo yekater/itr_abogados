@@ -29,7 +29,7 @@ Fuente disponible: banco traducido del documento maestro. Los PDF originales no 
 ## Diferencias y cambios justificados
 
 - Precio del briefing: aproximadamente 540 €, IVA incluido; ficha citada por el documento: 445,00 €, fiscalidad no confirmada. Descuentos de lanzamiento, estudiantes y desempleados no verificados. Se archivan únicamente aquí y en el briefing interno. Exclusión pública permanente.
-- 60 h estimadas = 20 teóricas + 40 prácticas; plataforma citada: 15 h 10 min. Métricas distintas, aclaradas próximas al dato y en PDF.
+- 60 h estimadas = 20 teóricas + 40 prácticas; plataforma citada: 22 h 20 min. Métricas distintas, aclaradas próximas al dato y en PDF.
 - «Certificado expedido y visado por COEINF, en trámite de denominación final» y «Se expide y visará por COEINF; no equivale a título oficial»: originales no confirmados. Se publican únicamente certificado final y referencia pendiente. «Certificado para titulación de Técnico Tecnólogo» se conserva como denominación de la ficha citada, pendiente.
 - El término acreditación es parte del nombre, no título oficial.
 - Repeticiones comparten componentes. Prioridad editorial K sobre J e I en el hero y orden de perfiles.

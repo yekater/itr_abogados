@@ -41,7 +41,7 @@ const caFormat = {
   work: 'Sí. Pots compaginar el curs amb una jornada laboral completa perquè l’aprenentatge és autònom, sense horaris de classe obligatoris ni termini de finalització. Els materials estan disponibles per sempre.',
 } as const;
 const caDuration = 'Càrrega formativa estimada de 30 hores, segons el programa facilitat.';
-const caDurationNote = 'El temps configurat actualment a la plataforma és de 15 h 10 min; consulta la dedicació i la planificació vigents.';
+const caDurationNote = 'El temps configurat actualment a la plataforma és de 22 h 20 min; consulta la dedicació i la planificació vigents.';
 
 const caFaq: readonly Pair[] = [
   ['Necessito coneixements previs?', 'No. El curs parteix d’un nivell bàsic i avança cap a pràctiques avançades.'],
@@ -65,7 +65,7 @@ const enFormat = {
   work: 'Yes. You can combine the course with a full-time job because learning is self-directed, with no mandatory class schedules or completion deadline. The materials are available forever.',
 } as const;
 const enDuration = 'Estimated study load of 30 hours, according to the programme provided.';
-const enDurationNote = 'The time currently configured on the platform is 15 h 10 min; check the active dedication and schedule.';
+const enDurationNote = 'The time currently configured on the platform is 22 h 20 min; check the active dedication and schedule.';
 
 const enFaq: readonly Pair[] = [
   ['Do I need prior knowledge?', 'No. The course starts from a basic level and progresses to advanced practice.'],
