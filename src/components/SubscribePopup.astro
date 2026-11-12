@@ -123,14 +123,12 @@ const copy = {
       btn&&(btn.disabled=true);
       const email=(input?.value||'').trim();
       try{
-        const res=await fetch(subscribeUrl,{
+        await fetch(subscribeUrl,{
           method:'POST',
-          headers:{'Content-Type':'application/json'},
+          mode:'no-cors',
+          headers:{'Content-Type':'text/plain'},
           body:JSON.stringify({jsonrpc:'2.0',method:'call',params:{value:email,subscription_type:'email',list_id:Number(mailingListId)}})
         });
-        if(!res.ok)throw new Error(String(res.status));
-        const data=await res.json().catch(()=>null) as {result?:{toast_type?:string}}|null;
-        if(data?.result?.toast_type&&data.result.toast_type!=='success')throw new Error(data.result.toast_type);
         msg&&(msg.textContent=form.dataset.okMsg||'',msg.hidden=false);
         track('subscribe_submit',{destination_type:'odoo_mailing_list',list_id:mailingListId});
         localStorage.setItem(KEY,'1');
